@@ -1,7 +1,9 @@
 import parseCapabilities from 'desired-capabilities';
 import childProcess from 'child_process';
+import which from 'which';
 import startSimulator from './start-simulator.js';
 
+var isIdb = !!which.sync('idb_companion');
 
 export default {
     // Multiple browsers support
@@ -19,16 +21,29 @@ export default {
         this.currentBrowsers[id] = device;
 
         //If the device is not Shutdown we don't know what state it's in - shut it down and reboot it
-        if (device.state !== 'Shutdown')
-            childProcess.execSync('fbsimctl ' + device.udid + ' shutdown', { stdio: 'ignore' });
+        if (device.state !== 'Shutdown') {
+            const shutdownCommand = isIdb ?
+                'idb_companion --shutdown ' + device.udid :
+                'fbsimctl ' + device.udid + ' shutdown';
 
-        await startSimulator(device);
+            childProcess.execSync(shutdownCommand, { stdio: 'ignore' });
+        }
+
+        if (isIdb) 
+            childProcess.execSync('idb_companion --boot ' + device.udid);
+        else 
+            await startSimulator(device);
+        
 
         childProcess.execSync(`xcrun simctl openurl ${device.udid} ${pageUrl}`, { stdio: 'ignore' });
     },
 
     async closeBrowser (id) {
-        childProcess.execSync('fbsimctl ' + this.currentBrowsers[id].udid + ' shutdown', { stdio: 'ignore' });
+        var closeBrowserCommand = isIdb ?
+            'idb_companion --shutdown ' + this.currentBrowsers[id].udid :
+            'fbsimctl ' + this.currentBrowsers[id].udid + ' shutdown';
+
+        childProcess.execSync(closeBrowserCommand, { stdio: 'ignore' });
     },
 
 
@@ -68,13 +83,31 @@ export default {
 
     _getAvailableDevices () {
         //Get the list of available devices from fbsimctl's list command
-        var rawDevices = childProcess.execSync('fbsimctl list').toString().split('\n');
+        var listDevicesCommand = isIdb ? 
+            'idb_companion --list 1' :
+            'fbsimctl list';
+        var rawDevices = childProcess.execSync(listDevicesCommand).toString().split('\n');
         var availableDevices = {};
 
         //Split each device entry apart on the separator, and build an object from the parts
         for (var entry of rawDevices) {
-            var parts = entry.split(' | ');
-            var device = { name: parts[3], sdk: parts[4], udid: parts[0], state: parts[2] };
+            var device;
+
+            if (isIdb) {
+                try {
+                    var { udid, os_version:sdk, state, name } = JSON.parse(entry);
+                }
+                catch (e) {
+                    // If JSON exception encountered, skip it.
+                }
+
+                device = { name, sdk, udid, state };
+            }
+            else {
+                var parts = entry.split(' | ');
+
+                device = { name: parts[3], sdk: parts[4], udid: parts[0], state: parts[2] };
+            }
 
             //We can't run tests on tvOS or watchOS, so only include iOS devices
             if (device.sdk && device.sdk.startsWith('iOS')) {
@@ -88,15 +121,30 @@ export default {
     },
 
     _getSortedAvailableDevicesList () {
-        const IOS_REPLACER = 'iOS '; 
+        const IOS_REPLACER = 'iOS ';
 
-        return Object.keys(this.availableDevices)
+        /*return Object.keys(this.availableDevices)
             .map(device => parseFloat(device.replace(IOS_REPLACER, '')))
             .sort((a, b) => b - a)
             .reduce((acc, curr) => {
-                var devicesOnPlatform = this.availableDevices[`${IOS_REPLACER}${curr}`]
-                return devicesOnPlatform ? acc.concat[devicesOnPlatform] : devicesOnPlatform
-            },[]);
+                var devicesOnPlatform = this.availableDevices[`${IOS_REPLACER}${curr}`];
+
+                return devicesOnPlatform ? acc.concat[devicesOnPlatform] : devicesOnPlatform;
+            }, []);*/
+        
+        const sortedKeys = [];
+
+        for (var key of Object.keys(this.availableDevices)) 
+            sortedKeys.push(key.replace(IOS_REPLACER, ''));
+        
+        sortedKeys.sort((a, b) => b - a);
+
+        var sortedDevices = [];
+
+        for (key of sortedKeys) 
+            sortedDevices = sortedDevices.concat(this.availableDevices[`${IOS_REPLACER}${key}`] || []);
+        
+        return sortedDevices;
     },
 
     _getDeviceFromDetails ({ platform, browserName }) {

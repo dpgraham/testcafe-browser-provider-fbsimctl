@@ -12,14 +12,15 @@ It uses Facebook's [fbsimctl](https://github.com/facebook/FBSimulatorControl/tre
 ## Install
 
 ```
-npm install testcafe-browser-provider-fbsimctl
+npm install testcafe-browser-provider-ios
 ```
 
 Requirements:
 
  * This plugin requires that you have XCode >= 8.2 installed, and the iOS simulator available.
- * [fbsimctl](https://github.com/facebook/FBSimulatorControl/tree/master/fbsimctl) must be installed and available on your `PATH`.
-   ([Installation instructions](https://github.com/facebook/FBSimulatorControl/blob/master/fbsimctl/Documentation/Installation.md))
+ * [idb](TODO) or [fbsimctl](https://github.com/facebook/FBSimulatorControl/tree/master/fbsimctl) must be installed and available on your `PATH`.
+   ([IDB Installation instructions]())
+   ([FBSimctl Installation instructions](https://github.com/facebook/FBSimulatorControl/blob/master/fbsimctl/Documentation/Installation.md))
 
 ## Usage
 
