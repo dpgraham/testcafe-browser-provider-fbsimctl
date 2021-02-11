@@ -86,7 +86,7 @@ export default {
         var listDevicesCommand = isIdb ? 
             'idb_companion --list 1' :
             'fbsimctl list';
-        var rawDevices = childProcess.execSync(listDevicesCommand, {stdio: 'ignore'}).toString().split('\n');
+        var rawDevices = childProcess.execSync(listDevicesCommand, { stdio: 'ignore' }).toString().split('\n');
         var availableDevices = {};
 
         //Split each device entry apart on the separator, and build an object from the parts

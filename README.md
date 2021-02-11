@@ -1,11 +1,10 @@
-# testcafe-browser-provider-fbsimctl
-[![Build Status](https://travis-ci.org/dig412/testcafe-browser-provider-fbsimctl.svg)](https://travis-ci.org/dig412/testcafe-browser-provider-fbsimctl)
-[![npm](https://img.shields.io/npm/v/testcafe-browser-provider-fbsimctl.svg)](https://www.npmjs.com/package/testcafe-browser-provider-fbsimctl)
+# testcafe-browser-provider-ios
+[![npm](https://img.shields.io/npm/v/testcafe-browser-provider-fbsimctl.svg)](https://www.npmjs.com/package/testcafe-browser-provider-ios)
 
-This is the **fbsimctl** browser provider plugin for [TestCafe](http://devexpress.github.io/testcafe).
+This is the **iOS** browser provider plugin for [TestCafe](http://devexpress.github.io/testcafe).
 
-It allows you to launch the iOS simulator for automated testing in Mobile Safari.
-It uses Facebook's [fbsimctl](https://github.com/facebook/FBSimulatorControl/tree/master/fbsimctl) tool to interface with the Simulator.
+It allows you to automate mobile Safari tests.
+It uses Facebook's [idb](TODO) (or falls back to[fbsimctl](https://github.com/facebook/FBSimulatorControl/tree/master/fbsimctl)) to with iOS Simulators and real devices.
 
 ![animated example of use](http://s3media.ents24.com.s3.amazonaws.com/image/testcafe/testcafe-example-image.gif)
 
@@ -27,7 +26,7 @@ Requirements:
 When you run tests from the command line, use the alias when specifying browsers:
 
 ```
-testcafe fbsimctl:device:os 'path/to/test/file.js'
+testcafe ios:device:os 'path/to/test/file.js'
 ```
 
 where `device` is something like:
