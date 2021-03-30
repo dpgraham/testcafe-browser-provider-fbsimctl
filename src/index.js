@@ -56,9 +56,9 @@ export default {
     },
 
     async takeScreenshot (id, screenshotPath) {
-        var command = 'xcrun simctl io ' + this.currentBrowsers[id].udid + ' screenshot \'' + screenshotPath + '\'';
+        var command = `xcrun simctl io ${this.currentBrowsers[id].udid} screenshot \'${screenshotPath}\'`;
 
-        childProcess.execSync(command);
+        childProcess.execSync(command, { stdio: 'ignore' });
     },
 
     _getBrowserDetails (browserName) {
@@ -78,6 +78,7 @@ export default {
             }
             catch (e) {
                 // If JSON exception encountered, skip it.
+                continue;
             }
 
             device = { name, sdk, udid, state };

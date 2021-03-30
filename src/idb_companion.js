@@ -15,12 +15,12 @@ export default {
         var { rc, stdout } = this._exec(['--list 1']);
 
         if (rc === 0)
-            return stdout.toString().split('\n');
+            return stdout.toString().trim().split('\n');
         return [];
     },
     _exec (args) {
         try {
-            var stdout = childProcess.execSync(`idb_companion ${args.join(' ')}`);
+            var stdout = childProcess.execSync(`idb_companion ${args.join(' ')}`, { stdio: ['pipe', 'pipe', 'ignore'] });
 
             return { rc: 0, stdout: stdout };
         }
