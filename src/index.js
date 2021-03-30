@@ -32,7 +32,7 @@ export default {
 
     // Optional - implement methods you need, remove other methods
     async init () {
-        await this._getAvailableDevices();
+        this.availableDevices = this._getAvailableDevices();
     },
 
     async getBrowserList () {
@@ -46,7 +46,7 @@ export default {
     },
 
     async resizeWindow (/* id, width, height, currentWidth, currentHeight */) {
-        this.reportWarning('The window resize functionality is not supported by the "fbsimctl" browser provider.');
+        this.reportWarning('The window resize functionality is not supported by the "ios" browser provider.');
     },
 
     async takeScreenshot (id, screenshotPath) {
@@ -86,7 +86,7 @@ export default {
             return parseFloat(b.sdk.replace('iOS ', '')) - parseFloat(a.sdk.replace('iOS ', ''));
         });
 
-        this.availableDevices = availableDevices;
+        return availableDevices;
     },
 
     _getDeviceFromDetails ({ platform, browserName }) {
@@ -94,15 +94,14 @@ export default {
         platform = platform.toLowerCase();
         browserName = browserName.toLowerCase();
 
-        // If the user hasn't specified a platform, find all the available ones and choose the newest
-        var matchedDevices = this.availableDevices.filter(device => {
-            return (platform === 'any' || platform === device.sdk.toLowerCase()) &&
-                browserName === device.name.toLowerCase();
+        var device = this.availableDevices.find((d) => {
+            return (platform === 'any' || platform === d.sdk.toLowerCase()) &&
+                browserName === d.name.toLowerCase();
         });
 
-        if (!matchedDevices.length)
-            return null;
 
-        return matchedDevices[0];
+        if (typeof device === 'undefined')
+            return null;
+        return device;
     }
 };
