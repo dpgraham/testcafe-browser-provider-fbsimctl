@@ -1,9 +1,6 @@
 import parseCapabilities from 'desired-capabilities';
 import childProcess from 'child_process';
-import which from 'which';
-import startSimulator from './start-simulator.js';
-
-var isIdb = !!which.sync('idb_companion');
+import idbCompanion from './idb_companion.js';
 
 export default {
     // Multiple browsers support
@@ -20,30 +17,17 @@ export default {
 
         this.currentBrowsers[id] = device;
 
-        //If the device is not Shutdown we don't know what state it's in - shut it down and reboot it
-        if (device.state !== 'Shutdown') {
-            const shutdownCommand = isIdb ?
-                'idb_companion --shutdown ' + device.udid :
-                'fbsimctl ' + device.udid + ' shutdown';
+        // If the device is not Shutdown we don't know what state it's in - shut it down and reboot it
+        if (device.state !== 'Shutdown') // {
+            idbCompanion.shutdown(device.udid);
 
-            childProcess.execSync(shutdownCommand, { stdio: 'ignore' });
-        }
-
-        if (isIdb)
-            childProcess.execSync('idb_companion --boot ' + device.udid, { stdio: 'ignore' });
-        else
-            await startSimulator(device);
-
+        idbCompanion.boot(device.udid);
 
         childProcess.execSync(`xcrun simctl openurl ${device.udid} ${pageUrl}`, { stdio: 'ignore' });
     },
 
     async closeBrowser (id) {
-        var closeBrowserCommand = isIdb ?
-            'idb_companion --shutdown ' + this.currentBrowsers[id].udid :
-            'fbsimctl ' + this.currentBrowsers[id].udid + ' shutdown';
-
-        childProcess.execSync(closeBrowserCommand, { stdio: 'ignore' });
+        idbCompanion.shutdown(this.currentBrowsers[id].udid);
     },
 
 
@@ -82,34 +66,23 @@ export default {
     },
 
     _getAvailableDevices () {
-        //Get the list of available devices from fbsimctl's list command
-        var listDevicesCommand = isIdb ?
-            'idb_companion --list 1' :
-            'fbsimctl list';
-        var rawDevices = childProcess.execSync(listDevicesCommand).toString().split('\n');
+        var rawDevices = idbCompanion.list();
         var availableDevices = {};
 
-        //Split each device entry apart on the separator, and build an object from the parts
+        // Split each device entry apart on the separator, and build an object from the parts
         for (var entry of rawDevices) {
             var device;
 
-            if (isIdb) {
-                try {
-                    var { udid, os_version:sdk, state, name } = JSON.parse(entry);
-                }
-                catch (e) {
-                    // If JSON exception encountered, skip it.
-                }
-
-                device = { name, sdk, udid, state };
+            try {
+                var { udid, os_version:sdk, state, name } = JSON.parse(entry);
             }
-            else {
-                var parts = entry.split(' | ');
-
-                device = { name: parts[3], sdk: parts[4], udid: parts[0], state: parts[2] };
+            catch (e) {
+                // If JSON exception encountered, skip it.
             }
 
-            //We can't run tests on tvOS or watchOS, so only include iOS devices
+            device = { name, sdk, udid, state };
+
+            // We can't run tests on tvOS or watchOS, so only include iOS devices
             if (device.sdk && device.sdk.startsWith('iOS')) {
                 if (!availableDevices[device.sdk])
                     availableDevices[device.sdk] = [];
