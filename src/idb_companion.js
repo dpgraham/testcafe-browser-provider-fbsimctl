@@ -3,10 +3,13 @@ var process = require('process');
 
 export default {
     boot (udid) {
-        var { rc, } = this._exec(['--boot', udid]);
+        var { rc, stdout } = this._exec(['--boot', udid]);
 
-        if (rc !== 0)
+        if (rc !== 0) {
+            console.error('Failed to boot simulator');
+            console.error(stdout.toString());
             process.exit(rc);
+        }
     },
     shutdown (udid) {
         this._exec(['--shutdown', udid]);
