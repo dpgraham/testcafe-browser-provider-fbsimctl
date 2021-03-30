@@ -30,18 +30,13 @@ export default {
         idbCompanion.shutdown(this.currentBrowsers[id].udid);
     },
 
-
     // Optional - implement methods you need, remove other methods
-    // Initialization
     async init () {
         await this._getAvailableDevices();
     },
 
-    // Browser names handling
     async getBrowserList () {
-        var devicesList = this._getSortedAvailableDevicesList();
-
-        return devicesList.map(device => `${device.name}:${device.sdk}`);
+        return this.availableDevices.map(device => `${device.name}:${device.sdk}`);
     },
 
     async isValidBrowserName (browserName) {
@@ -50,7 +45,6 @@ export default {
         return this._getDeviceFromDetails(browserDetails) !== null;
     },
 
-    // Extra methods
     async resizeWindow (/* id, width, height, currentWidth, currentHeight */) {
         this.reportWarning('The window resize functionality is not supported by the "fbsimctl" browser provider.');
     },
@@ -61,15 +55,15 @@ export default {
         childProcess.execSync(command, { stdio: 'ignore' });
     },
 
+    // Extra methods
     _getBrowserDetails (browserName) {
         return parseCapabilities(browserName)[0];
     },
 
     _getAvailableDevices () {
         var rawDevices = idbCompanion.list();
-        var availableDevices = {};
+        var availableDevices = [];
 
-        // Split each device entry apart on the separator, and build an object from the parts
         for (var entry of rawDevices) {
             var device;
 
@@ -84,40 +78,15 @@ export default {
             device = { name, sdk, udid, state };
 
             // We can't run tests on tvOS or watchOS, so only include iOS devices
-            if (device.sdk && device.sdk.startsWith('iOS')) {
-                if (!availableDevices[device.sdk])
-                    availableDevices[device.sdk] = [];
-
-                availableDevices[device.sdk].push(device);
-            }
+            if (device.sdk && device.sdk.startsWith('iOS'))
+                availableDevices.push(device);
         }
+
+        availableDevices.sort((a, b) => {
+            return parseFloat(b.sdk.replace('iOS ', '')) - parseFloat(a.sdk.replace('iOS ', ''));
+        });
+
         this.availableDevices = availableDevices;
-    },
-
-    _getSortedAvailableDevicesList () {
-        const IOS_REPLACER = 'iOS ';
-
-        /*return Object.keys(this.availableDevices)
-            .map(device => parseFloat(device.replace(IOS_REPLACER, '')))
-            .sort((a, b) => b - a)
-            .reduce((acc, curr) => {
-                var devicesOnPlatform = this.availableDevices[`${IOS_REPLACER}${curr}`];
-
-                return devicesOnPlatform ? acc.concat[devicesOnPlatform] : devicesOnPlatform;
-            }, []);*/
-        const sortedKeys = [];
-
-        for (var key of Object.keys(this.availableDevices))
-            sortedKeys.push(key.replace(IOS_REPLACER, ''));
-
-        sortedKeys.sort((a, b) => b - a);
-
-        var sortedDevices = [];
-
-        for (key of sortedKeys)
-            sortedDevices = sortedDevices.concat(this.availableDevices[`${IOS_REPLACER}${key}`] || []);
-
-        return sortedDevices;
     },
 
     _getDeviceFromDetails ({ platform, browserName }) {
@@ -125,10 +94,8 @@ export default {
         platform = platform.toLowerCase();
         browserName = browserName.toLowerCase();
 
-        var devicesList = this._getSortedAvailableDevicesList();
-
         // If the user hasn't specified a platform, find all the available ones and choose the newest
-        var matchedDevices = devicesList.filter(device => {
+        var matchedDevices = this.availableDevices.filter(device => {
             return (platform === 'any' || platform === device.sdk.toLowerCase()) &&
                 browserName === device.name.toLowerCase();
         });
