@@ -1,13 +1,12 @@
 {
   "name": "testcafe-browser-provider-ios",
   "version": "0.0.5",
-  "description": "iOS TestCafe browser provider plugin.",
-  "repository": "https://github.com/dpgraham/testcafe-browser-provider-ios",
-  "homepage": "https://github.com/dpgraham/testcafe-browser-provider-ios",
+  "description": "iOS TestCafe browser provider plugin",
+  "repository": "https://github.com/saucelabs/testcafe-browser-provider-ios",
+  "homepage": "https://github.com/saucelabs/testcafe-browser-provider-ios",
   "author": {
-    "name": "Doug Fitzmaurice",
-    "email": "",
-    "url": "https://www.ents24.com"
+    "name": "Mike Han",
+    "email": "mike.han@saucelabs.com"
   },
   "main": "lib/index",
   "files": [
@@ -26,8 +25,7 @@
   "license": "MIT",
   "dependencies": {
     "babel-runtime": "^6.11.6",
-    "desired-capabilities": "^0.1.0",
-    "shell-escape": "^0.2.0"
+    "desired-capabilities": "^0.1.0"
   },
   "devDependencies": {
     "babel-eslint": "^6.1.2",
