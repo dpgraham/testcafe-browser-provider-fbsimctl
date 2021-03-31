@@ -1,9 +1,6 @@
 import parseCapabilities from 'desired-capabilities';
 import childProcess from 'child_process';
-import which from 'which';
-import startSimulator from './start-simulator.js';
-
-var isIdb = !!which.sync('idb_companion');
+import idbCompanion from './idb_companion.js';
 
 export default {
     // Multiple browsers support
@@ -15,49 +12,31 @@ export default {
         var browserDetails = this._getBrowserDetails(browserName);
         var device = this._getDeviceFromDetails(browserDetails);
 
-        if (device === null) 
+        if (device === null)
             throw new Error('Could not find a valid iOS device to test on');
 
         this.currentBrowsers[id] = device;
 
-        //If the device is not Shutdown we don't know what state it's in - shut it down and reboot it
-        if (device.state !== 'Shutdown') {
-            const shutdownCommand = isIdb ?
-                'idb_companion --shutdown ' + device.udid :
-                'fbsimctl ' + device.udid + ' shutdown';
+        // If the device is not Shutdown we don't know what state it's in - shut it down and reboot it
+        if (device.state !== 'Shutdown') // {
+            idbCompanion.shutdown(device.udid);
 
-            childProcess.execSync(shutdownCommand, { stdio: 'ignore' });
-        }
-
-        if (isIdb) 
-            childProcess.execSync('idb_companion --boot ' + device.udid, { stdio: 'ignore' });
-        else 
-            await startSimulator(device);
-        
+        idbCompanion.boot(device.udid, 60 * 1000);
 
         childProcess.execSync(`xcrun simctl openurl ${device.udid} ${pageUrl}`, { stdio: 'ignore' });
     },
 
     async closeBrowser (id) {
-        var closeBrowserCommand = isIdb ?
-            'idb_companion --shutdown ' + this.currentBrowsers[id].udid :
-            'fbsimctl ' + this.currentBrowsers[id].udid + ' shutdown';
-
-        childProcess.execSync(closeBrowserCommand, { stdio: 'ignore' });
+        idbCompanion.shutdown(this.currentBrowsers[id].udid);
     },
-
 
     // Optional - implement methods you need, remove other methods
-    // Initialization
     async init () {
-        await this._getAvailableDevices();
+        this.availableDevices = this._getAvailableDevices();
     },
 
-    // Browser names handling
     async getBrowserList () {
-        var devicesList = this._getSortedAvailableDevicesList();
-        
-        return devicesList.map(device => `${device.name}:${device.sdk}`);
+        return this.availableDevices.map(device => `${device.name}:${device.os} ${device.version}`);
     },
 
     async isValidBrowserName (browserName) {
@@ -66,85 +45,49 @@ export default {
         return this._getDeviceFromDetails(browserDetails) !== null;
     },
 
-    // Extra methods
     async resizeWindow (/* id, width, height, currentWidth, currentHeight */) {
-        this.reportWarning('The window resize functionality is not supported by the "fbsimctl" browser provider.');
+        this.reportWarning('The window resize functionality is not supported by the "ios" browser provider.');
     },
 
     async takeScreenshot (id, screenshotPath) {
-        var command = 'xcrun simctl io ' + this.currentBrowsers[id].udid + ' screenshot \'' + screenshotPath + '\'';
+        var command = `xcrun simctl io ${this.currentBrowsers[id].udid} screenshot '${screenshotPath}'`;
 
-        childProcess.execSync(command);
+        childProcess.execSync(command, { stdio: 'ignore' });
     },
 
+    // Extra methods
     _getBrowserDetails (browserName) {
         return parseCapabilities(browserName)[0];
     },
 
     _getAvailableDevices () {
-        //Get the list of available devices from fbsimctl's list command
-        var listDevicesCommand = isIdb ? 
-            'idb_companion --list 1' :
-            'fbsimctl list';
-        var rawDevices = childProcess.execSync(listDevicesCommand).toString().split('\n');
-        var availableDevices = {};
+        var rawDevices = idbCompanion.list();
+        var availableDevices = [];
 
-        //Split each device entry apart on the separator, and build an object from the parts
         for (var entry of rawDevices) {
             var device;
 
-            if (isIdb) {
-                try {
-                    var { udid, os_version:sdk, state, name } = JSON.parse(entry);
-                }
-                catch (e) {
-                    // If JSON exception encountered, skip it.
-                }
-
-                device = { name, sdk, udid, state };
+            try {
+                var { udid, os_version:osVersion, state, name } = JSON.parse(entry);
             }
-            else {
-                var parts = entry.split(' | ');
-
-                device = { name: parts[3], sdk: parts[4], udid: parts[0], state: parts[2] };
+            catch (e) {
+                // If JSON exception encountered, skip it.
+                continue;
             }
+            var [ os, version ] = osVersion.split(' ');
 
-            //We can't run tests on tvOS or watchOS, so only include iOS devices
-            if (device.sdk && device.sdk.startsWith('iOS')) {
-                if (!availableDevices[device.sdk])
-                    availableDevices[device.sdk] = []; 
-                
-                availableDevices[device.sdk].push(device);
-            }
+            device = { name, os, version, udid, state };
+
+            // We can't run tests on tvOS or watchOS, so only include iOS devices
+            if (device.os && device.os.startsWith('iOS'))
+                availableDevices.push(device);
         }
-        this.availableDevices = availableDevices;
-    },
 
-    _getSortedAvailableDevicesList () {
-        const IOS_REPLACER = 'iOS ';
+        availableDevices.sort((a, b) => {
+            return parseFloat(b.version) - parseFloat(a.version);
+        });
 
-        /*return Object.keys(this.availableDevices)
-            .map(device => parseFloat(device.replace(IOS_REPLACER, '')))
-            .sort((a, b) => b - a)
-            .reduce((acc, curr) => {
-                var devicesOnPlatform = this.availableDevices[`${IOS_REPLACER}${curr}`];
-
-                return devicesOnPlatform ? acc.concat[devicesOnPlatform] : devicesOnPlatform;
-            }, []);*/
-        
-        const sortedKeys = [];
-
-        for (var key of Object.keys(this.availableDevices)) 
-            sortedKeys.push(key.replace(IOS_REPLACER, ''));
-        
-        sortedKeys.sort((a, b) => b - a);
-
-        var sortedDevices = [];
-
-        for (key of sortedKeys) 
-            sortedDevices = sortedDevices.concat(this.availableDevices[`${IOS_REPLACER}${key}`] || []);
-        
-        return sortedDevices;
+        return availableDevices;
     },
 
     _getDeviceFromDetails ({ platform, browserName }) {
@@ -152,17 +95,14 @@ export default {
         platform = platform.toLowerCase();
         browserName = browserName.toLowerCase();
 
-        var devicesList = this._getSortedAvailableDevicesList();
-        
-        // If the user hasn't specified a platform, find all the available ones and choose the newest
-        var matchedDevices = devicesList.filter(device => {
-            return (platform === 'any' || platform === device.sdk.toLowerCase()) &&
-                browserName === device.name.toLowerCase();
+        var device = this.availableDevices.find((d) => {
+            return (platform === 'any' || platform === `${d.os} ${d.version}`) &&
+                browserName === d.name.toLowerCase();
         });
 
-        if (!matchedDevices.length)
-            return null;
 
-        return matchedDevices[0];
+        if (typeof device === 'undefined')
+            return null;
+        return device;
     }
 };
