@@ -36,7 +36,7 @@ export default {
     },
 
     async getBrowserList () {
-        return this.availableDevices.map(device => `${device.name}:${device.sdk}`);
+        return this.availableDevices.map(device => `${device.name}:${device.os} ${device.version}`);
     },
 
     async isValidBrowserName (browserName) {
@@ -68,22 +68,23 @@ export default {
             var device;
 
             try {
-                var { udid, os_version:sdk, state, name } = JSON.parse(entry);
+                var { udid, os_version:osVersion, state, name } = JSON.parse(entry);
             }
             catch (e) {
                 // If JSON exception encountered, skip it.
                 continue;
             }
+            var [ os, version ] = osVersion.split(' ');
 
-            device = { name, sdk, udid, state };
+            device = { name, os, version, udid, state };
 
             // We can't run tests on tvOS or watchOS, so only include iOS devices
-            if (device.sdk && device.sdk.startsWith('iOS'))
+            if (device.os && device.os.startsWith('iOS'))
                 availableDevices.push(device);
         }
 
         availableDevices.sort((a, b) => {
-            return parseFloat(b.sdk.replace('iOS ', '')) - parseFloat(a.sdk.replace('iOS ', ''));
+            return parseFloat(b.version) - parseFloat(a.version);
         });
 
         return availableDevices;
@@ -95,7 +96,7 @@ export default {
         browserName = browserName.toLowerCase();
 
         var device = this.availableDevices.find((d) => {
-            return (platform === 'any' || platform === d.sdk.toLowerCase()) &&
+            return (platform === 'any' || platform === `${d.os} ${d.version}`) &&
                 browserName === d.name.toLowerCase();
         });
 
