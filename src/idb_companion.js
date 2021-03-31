@@ -2,8 +2,8 @@ var childProcess = require('child_process');
 var process = require('process');
 
 export default {
-    boot (udid) {
-        var { rc, stdout } = this._exec(['--boot', udid]);
+    boot (udid, timeout) {
+        var { rc, stdout } = this._exec(['--boot', udid], { timeout });
 
         if (rc !== 0) {
             console.error('Failed to boot simulator');
@@ -11,8 +11,8 @@ export default {
             process.exit(rc);
         }
     },
-    shutdown (udid) {
-        this._exec(['--shutdown', udid]);
+    shutdown (udid, timeout) {
+        this._exec(['--shutdown', udid], { timeout });
     },
     list () {
         var { rc, stdout } = this._exec(['--list 1']);
@@ -21,9 +21,13 @@ export default {
             return stdout.toString().trim().split('\n');
         return [];
     },
-    _exec (args) {
+    _exec (args, opts = {}) {
         try {
-            var stdout = childProcess.execSync(`idb_companion ${args.join(' ')}`, { stdio: ['pipe', 'pipe', 'ignore'] });
+            var execOpts = { stdio: ['pipe', 'pipe', 'ignore' ] };
+
+            if ('timeout' in opts)
+                execOpts['timeout'] = opts.timeout;
+            var stdout = childProcess.execSync(`idb_companion ${args.join(' ')}`, execOpts);
 
             return { rc: 0, stdout: stdout };
         }

@@ -21,7 +21,7 @@ export default {
         if (device.state !== 'Shutdown') // {
             idbCompanion.shutdown(device.udid);
 
-        idbCompanion.boot(device.udid);
+        idbCompanion.boot(device.udid, 60 * 1000);
 
         childProcess.execSync(`xcrun simctl openurl ${device.udid} ${pageUrl}`, { stdio: 'ignore' });
     },

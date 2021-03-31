@@ -89,5 +89,22 @@ describe('idb_companion', function () {
 
             assert(rc === 1);
         });
+        it('should not set timeout if options are not provided', function () {
+            var execStub = sinon.stub(childProcess, 'execSync');
+
+            idbCompanion._exec(['some', 'args']);
+            var options = execStub.firstCall.args[1];
+
+            assert(!('timeout' in options));
+        });
+        it('should set timeout if provided', function () {
+            var execStub = sinon.stub(childProcess, 'execSync');
+
+            idbCompanion._exec(['some', 'args'], { timeout: 100 });
+            var options = execStub.firstCall.args[1];
+
+            assert('timeout' in options);
+            assert(options.timeout === 100);
+        });
     });
 });
