@@ -1,6 +1,7 @@
 import parseCapabilities from 'desired-capabilities';
 import childProcess from 'child_process';
 import idbCompanion from './idb_companion.js';
+import deviceList from './device_list.js';
 
 export default {
     // Multiple browsers support
@@ -62,47 +63,11 @@ export default {
 
     _getAvailableDevices () {
         var rawDevices = idbCompanion.list();
-        var availableDevices = [];
 
-        for (var entry of rawDevices) {
-            var device;
-
-            try {
-                var { udid, os_version:osVersion, state, name } = JSON.parse(entry);
-            }
-            catch (e) {
-                // If JSON exception encountered, skip it.
-                continue;
-            }
-            var [ os, version ] = osVersion.split(' ');
-
-            device = { name, os, version, udid, state };
-
-            // We can't run tests on tvOS or watchOS, so only include iOS devices
-            if (device.os && device.os.startsWith('iOS'))
-                availableDevices.push(device);
-        }
-
-        availableDevices.sort((a, b) => {
-            return parseFloat(b.version) - parseFloat(a.version);
-        });
-
-        return availableDevices;
+        return deviceList.get(rawDevices);
     },
 
     _getDeviceFromDetails ({ platform, browserName }) {
-        // Do a lowercase match on the device they have asked for so we can be nice about iphone vs iPhone
-        platform = platform.toLowerCase();
-        browserName = browserName.toLowerCase();
-
-        var device = this.availableDevices.find((d) => {
-            return (platform === 'any' || platform === `${d.os} ${d.version}`) &&
-                browserName === d.name.toLowerCase();
-        });
-
-
-        if (typeof device === 'undefined')
-            return null;
-        return device;
+        return deviceList.find(this.availableDevices, { platform, name: browserName });
     }
 };
