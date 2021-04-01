@@ -1,6 +1,8 @@
 import childProcess from 'child_process';
-import idbCompanion from './idb_companion.js';
+const debug = require('debug')('ios-provider');
+
 import deviceList from './device_list.js';
+import idbCompanion from './idb_companion.js';
 
 export default {
     // Multiple browsers support
@@ -19,6 +21,7 @@ export default {
     },
 
     async openBrowser (id, pageUrl, browserName) {
+        debug(`Opening ${browserName}`);
         var device = this._browserNameToDevice(browserName);
 
         if (device === null)
@@ -27,11 +30,15 @@ export default {
         this.currentBrowsers[id] = device;
 
         // If the device is not Shutdown we don't know what state it's in - shut it down and reboot it
-        if (device.state !== 'Shutdown') // {
+        if (device.state !== 'Shutdown') {
+            debug('Forcing shutdown of device before test');
             idbCompanion.shutdown(device.udid);
+        }
 
+        debug(`Booting device (${device.name} ${device.os} ${device.version})`);
         idbCompanion.boot(device.udid, 60 * 1000);
 
+        debug(`Opening url: ${pageUrl}`);
         childProcess.execSync(`xcrun simctl openurl ${device.udid} ${pageUrl}`, { stdio: 'ignore' });
     },
 
@@ -41,9 +48,11 @@ export default {
 
     // Optional - implement methods you need, remove other methods
     async init () {
+        debug('Initializing plugin');
         var rawDevices = idbCompanion.list();
 
         this.availableDevices = deviceList.parse(rawDevices);
+        debug(`Found ${this.availableDevices.length} devices`);
     },
 
     async getBrowserList () {
