@@ -40,7 +40,7 @@
     "gulp-babel": "^6.1.2",
     "gulp-eslint": "^3.0.1",
     "gulp-mocha": "^8.0.0",
-    "publish-please": "^5.5.2",
+    "release-it": "^14.5.1",
     "sinon": "^10.0.0"
   }
 }
