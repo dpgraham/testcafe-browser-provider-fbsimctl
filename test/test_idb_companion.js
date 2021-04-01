@@ -5,11 +5,10 @@ var process = require('process');
 var childProcess = require('child_process');
 
 
-afterEach(() => {
-    sinon.restore();
-});
-
 describe('idb_companion', function () {
+    afterEach(() => {
+        sinon.restore();
+    });
     describe('#boot()', function () {
         it('should call _exec with correct args', function () {
             var execStub = sinon.stub(idbCompanion, '_exec').returns({ rc: 0, stdout: '' });
