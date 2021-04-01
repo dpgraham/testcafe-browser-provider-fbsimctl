@@ -1,6 +1,6 @@
 {
   "name": "testcafe-browser-provider-ios",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "iOS TestCafe browser provider plugin",
   "repository": "https://github.com/saucelabs/testcafe-browser-provider-ios",
   "homepage": "https://github.com/saucelabs/testcafe-browser-provider-ios",
@@ -13,6 +13,7 @@
     "lib"
   ],
   "scripts": {
+    "prepare": "gulp build",
     "test": "gulp test",
     "publish-please": "publish-please"
   },
