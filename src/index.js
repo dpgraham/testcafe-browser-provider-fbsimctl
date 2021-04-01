@@ -1,6 +1,6 @@
-import parseCapabilities from 'desired-capabilities';
 import childProcess from 'child_process';
 import idbCompanion from './idb_companion.js';
+import deviceList from './device_list.js';
 
 export default {
     // Multiple browsers support
@@ -8,9 +8,18 @@ export default {
 
     currentBrowsers: {},
 
+    availableDevices: [],
+
+    _browserNameToDevice (browserName) {
+        let [ device, version = '' ] = browserName.split(':'); // eslint-disable-line prefer-const
+
+        if (version === '')
+            version = 'any';
+        return deviceList.find(this.availableDevices, { name: device, platform: version });
+    },
+
     async openBrowser (id, pageUrl, browserName) {
-        var browserDetails = this._getBrowserDetails(browserName);
-        var device = this._getDeviceFromDetails(browserDetails);
+        var device = this._browserNameToDevice(browserName);
 
         if (device === null)
             throw new Error('Could not find a valid iOS device to test on');
@@ -32,7 +41,9 @@ export default {
 
     // Optional - implement methods you need, remove other methods
     async init () {
-        this.availableDevices = this._getAvailableDevices();
+        var rawDevices = idbCompanion.list();
+
+        this.availableDevices = deviceList.parse(rawDevices);
     },
 
     async getBrowserList () {
@@ -40,9 +51,7 @@ export default {
     },
 
     async isValidBrowserName (browserName) {
-        var browserDetails = this._getBrowserDetails(browserName);
-
-        return this._getDeviceFromDetails(browserDetails) !== null;
+        return this._browserNameToDevice(browserName) !== null;
     },
 
     async resizeWindow (/* id, width, height, currentWidth, currentHeight */) {
@@ -53,56 +62,5 @@ export default {
         var command = `xcrun simctl io ${this.currentBrowsers[id].udid} screenshot '${screenshotPath}'`;
 
         childProcess.execSync(command, { stdio: 'ignore' });
-    },
-
-    // Extra methods
-    _getBrowserDetails (browserName) {
-        return parseCapabilities(browserName)[0];
-    },
-
-    _getAvailableDevices () {
-        var rawDevices = idbCompanion.list();
-        var availableDevices = [];
-
-        for (var entry of rawDevices) {
-            var device;
-
-            try {
-                var { udid, os_version:osVersion, state, name } = JSON.parse(entry);
-            }
-            catch (e) {
-                // If JSON exception encountered, skip it.
-                continue;
-            }
-            var [ os, version ] = osVersion.split(' ');
-
-            device = { name, os, version, udid, state };
-
-            // We can't run tests on tvOS or watchOS, so only include iOS devices
-            if (device.os && device.os.startsWith('iOS'))
-                availableDevices.push(device);
-        }
-
-        availableDevices.sort((a, b) => {
-            return parseFloat(b.version) - parseFloat(a.version);
-        });
-
-        return availableDevices;
-    },
-
-    _getDeviceFromDetails ({ platform, browserName }) {
-        // Do a lowercase match on the device they have asked for so we can be nice about iphone vs iPhone
-        platform = platform.toLowerCase();
-        browserName = browserName.toLowerCase();
-
-        var device = this.availableDevices.find((d) => {
-            return (platform === 'any' || platform === `${d.os} ${d.version}`) &&
-                browserName === d.name.toLowerCase();
-        });
-
-
-        if (typeof device === 'undefined')
-            return null;
-        return device;
     }
 };
