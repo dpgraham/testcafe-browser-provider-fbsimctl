@@ -14,7 +14,7 @@ export default {
         return device;
     },
 
-    get (rawList) {
+    parse (rawList) {
         const parsedList = [];
 
         for (const entry of rawList) {

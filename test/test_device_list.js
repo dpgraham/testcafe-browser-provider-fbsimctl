@@ -52,9 +52,9 @@ describe('device_list', function () {
             assert(device === null);
         });
     });
-    describe('#get', function () {
+    describe('#parse', function () {
         it('should return a list of devices sorted by descending versions', function () {
-            const parsedList = deviceList.get(rawIdbList);
+            const parsedList = deviceList.parse(rawIdbList);
             const isSorted = parsedList.every((device, index) => { // eslint-disable-line max-nested-callbacks
                 if (index === parsedList.length - 1)
                     return true;
@@ -66,7 +66,7 @@ describe('device_list', function () {
             assert(isSorted);
         });
         it('should only include iOS devices', function () {
-            const parsedList = deviceList.get(rawIdbList);
+            const parsedList = deviceList.parse(rawIdbList);
             const onlyIOS = parsedList.every((device) => { // eslint-disable-line max-nested-callbacks
                 return device.os === 'iOS';
             });
@@ -74,7 +74,7 @@ describe('device_list', function () {
             assert(onlyIOS);
         });
         it('should always return a list', function () {
-            const parsedList = deviceList.get(['not json']);
+            const parsedList = deviceList.parse(['not json']);
 
             assert(Array.isArray(parsedList));
         });

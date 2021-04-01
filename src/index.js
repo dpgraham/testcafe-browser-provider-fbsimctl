@@ -43,7 +43,7 @@ export default {
     async init () {
         var rawDevices = idbCompanion.list();
 
-        this.availableDevices = deviceList.get(rawDevices);
+        this.availableDevices = deviceList.parse(rawDevices);
     },
 
     async getBrowserList () {
