@@ -1,4 +1,3 @@
-import parseCapabilities from 'desired-capabilities';
 import childProcess from 'child_process';
 import idbCompanion from './idb_companion.js';
 import deviceList from './device_list.js';
@@ -9,9 +8,18 @@ export default {
 
     currentBrowsers: {},
 
+    availableDevices: [],
+
+    _browserNameToDevice (browserName) {
+        let [ device, version = '' ] = browserName.split(':'); // eslint-disable-line prefer-const
+
+        if (version === '')
+            version = 'any';
+        return deviceList.find(this.availableDevices, { name: device, platform: version });
+    },
+
     async openBrowser (id, pageUrl, browserName) {
-        var browserDetails = this._getBrowserDetails(browserName);
-        var device = this._getDeviceFromDetails(browserDetails);
+        var device = this._browserNameToDevice(browserName);
 
         if (device === null)
             throw new Error('Could not find a valid iOS device to test on');
@@ -33,7 +41,9 @@ export default {
 
     // Optional - implement methods you need, remove other methods
     async init () {
-        this.availableDevices = this._getAvailableDevices();
+        var rawDevices = idbCompanion.list();
+
+        this.availableDevices = deviceList.get(rawDevices);
     },
 
     async getBrowserList () {
@@ -41,9 +51,7 @@ export default {
     },
 
     async isValidBrowserName (browserName) {
-        var browserDetails = this._getBrowserDetails(browserName);
-
-        return this._getDeviceFromDetails(browserDetails) !== null;
+        return this._browserNameToDevice(browserName) !== null;
     },
 
     async resizeWindow (/* id, width, height, currentWidth, currentHeight */) {
@@ -54,20 +62,5 @@ export default {
         var command = `xcrun simctl io ${this.currentBrowsers[id].udid} screenshot '${screenshotPath}'`;
 
         childProcess.execSync(command, { stdio: 'ignore' });
-    },
-
-    // Extra methods
-    _getBrowserDetails (browserName) {
-        return parseCapabilities(browserName)[0];
-    },
-
-    _getAvailableDevices () {
-        var rawDevices = idbCompanion.list();
-
-        return deviceList.get(rawDevices);
-    },
-
-    _getDeviceFromDetails ({ platform, browserName }) {
-        return deviceList.find(this.availableDevices, { platform, name: browserName });
     }
 };
