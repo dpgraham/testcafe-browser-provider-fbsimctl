@@ -1,4 +1,5 @@
 const childProcess = require('child_process');
+const debug = require('debug')('ios-provider');
 const process = require('process');
 
 export default {
@@ -32,10 +33,14 @@ export default {
             return { rc: 0, stdout: stdout };
         }
         catch (e) {
-            if (e.errno === 'ETIMEDOUT')
+            if (e.errno === 'ETIMEDOUT') {
+                debug('_exec errored with timeout');
                 return { rc: 65, stdout: '' };
-            if (e.status === 127)
+            }
+            if (e.status === 127) {
+                debug('_exec could not find idb_companion');
                 return { rc: 64, stdout: e.stdout };
+            }
             return { rc: 1, stdout: e.stdout };
         }
     },
