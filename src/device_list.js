@@ -5,7 +5,7 @@ export default {
         name = name.toLowerCase();
 
         const device = list.find((d) => {
-            return (platform === 'any' || platform === `${d.os} ${d.version}`) &&
+            return (platform === 'any' || platform === `${d.os} ${d.version}`.toLowerCase()) &&
                 name === d.name.toLowerCase();
         });
 
