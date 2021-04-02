@@ -50,7 +50,7 @@ $ testcafe --list-browsers ios
 
 #### Debugging
 
-Run with `DEBUG="ios-provider"` to see debug out.
+Run with `DEBUG="testcafe:browser-provider-ios"` to see debug output.
 
 ## Running unit tests
 
