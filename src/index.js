@@ -1,8 +1,8 @@
-import childProcess from 'child_process';
-const debug = require('debug')('ios-provider');
-
-import deviceList from './device_list.js';
-import idbCompanion from './idb_companion.js';
+const childProcess = require('child_process');
+const debug = require('debug')('testcafe:browser-provider-ios');
+const deviceList = require('./device_list.js');
+const idbCompanion = require('./idb_companion.js');
+const process = require('process');
 
 export default {
     // Multiple browsers support
@@ -36,7 +36,10 @@ export default {
         }
 
         debug(`Booting device (${device.name} ${device.os} ${device.version})`);
-        idbCompanion.boot(device.udid, 60 * 1000);
+        // Timeout in seconds
+        const timeout = process.env.IOS_BOOT_TIMEOUT || 60;
+
+        idbCompanion.boot(device.udid, timeout * 1000);
 
         debug(`Opening url: ${pageUrl}`);
         childProcess.execSync(`xcrun simctl openurl ${device.udid} ${pageUrl}`, { stdio: 'ignore' });

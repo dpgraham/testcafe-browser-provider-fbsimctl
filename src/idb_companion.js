@@ -1,5 +1,5 @@
 const childProcess = require('child_process');
-const debug = require('debug')('ios-provider');
+const debug = require('debug')('testcafe:browser-provider-ios');
 const process = require('process');
 
 export default {
@@ -24,7 +24,7 @@ export default {
     },
     _exec (args, opts = {}) {
         try {
-            const execOpts = { stdio: ['pipe', 'pipe', 'ignore' ] };
+            const execOpts = { stdio: ['pipe', 'pipe', 'pipe'] };
 
             if ('timeout' in opts)
                 execOpts['timeout'] = opts.timeout;
