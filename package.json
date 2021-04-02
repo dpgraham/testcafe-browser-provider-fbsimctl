@@ -13,9 +13,8 @@
     "lib"
   ],
   "scripts": {
-    "prepack": "gulp test && gulp build",
-    "test": "gulp test",
-    "publish-please": "publish-please"
+    "build": "gulp build",
+    "test": "gulp test"
   },
   "keywords": [
     "testcafe",
