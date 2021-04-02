@@ -48,6 +48,10 @@ $ testcafe --list-browsers ios
 "ios:iPhone 5s:iOS 12.2"
 ```
 
+#### Debugging
+
+Run with `DEBUG="ios-provider"` to see debug out.
+
 ## Running unit tests
 
 ```
