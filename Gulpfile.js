@@ -40,4 +40,4 @@ function test () {
 exports.clean = clean;
 exports.lint = lint;
 exports.build = gulp.series(clean, lint, build);
-exports.test = gulp.series(build, test);
+exports.test = gulp.series(build, lint, test);
