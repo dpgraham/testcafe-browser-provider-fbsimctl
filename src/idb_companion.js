@@ -24,7 +24,7 @@ export default {
     },
     _exec (args, opts = {}) {
         try {
-            const execOpts = { stdio: ['pipe', 'pipe', 'ignore' ] };
+            const execOpts = { stdio: ['pipe', 'pipe', 'pipe'] };
 
             if ('timeout' in opts)
                 execOpts['timeout'] = opts.timeout;
