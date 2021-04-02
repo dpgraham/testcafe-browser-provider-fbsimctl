@@ -1,5 +1,5 @@
 const childProcess = require('child_process');
-const debug = require('debug')('ios-provider');
+const debug = require('debug')('testcafe:browser-provider-ios');
 const process = require('process');
 
 export default {
