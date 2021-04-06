@@ -38,6 +38,8 @@ export default {
                 execOpts['timeout'] = opts.timeout;
             childProcess.exec(`idb_companion ${args.join(' ')}`, execOpts, (error, stdout, stderr) => {
                 if (error !== null) {
+                    // This is not an exact way of detecting a timeout.
+                    // afaict, there's no reliable way to know whether the process timed out.
                     if (error.killed === true && error.signal === 'SIGKILL') {
                         debug('_exec errored with timeout');
                         reject({ rc: 65, stdout, stderr });
