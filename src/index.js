@@ -32,27 +32,27 @@ export default {
         // If the device is not Shutdown we don't know what state it's in - shut it down and reboot it
         if (device.state !== 'Shutdown') {
             debug('Forcing shutdown of device before test');
-            idbCompanion.shutdown(device.udid);
+            await idbCompanion.shutdown(device.udid);
         }
 
         debug(`Booting device (${device.name} ${device.os} ${device.version})`);
         // Timeout in seconds
         const timeout = process.env.IOS_BOOT_TIMEOUT || 60;
 
-        idbCompanion.boot(device.udid, timeout * 1000);
+        await idbCompanion.boot(device.udid, timeout * 1000);
 
         debug(`Opening url: ${pageUrl}`);
         childProcess.execSync(`xcrun simctl openurl ${device.udid} ${pageUrl}`, { stdio: 'ignore' });
     },
 
     async closeBrowser (id) {
-        idbCompanion.shutdown(this.currentBrowsers[id].udid);
+        await idbCompanion.shutdown(this.currentBrowsers[id].udid);
     },
 
     // Optional - implement methods you need, remove other methods
     async init () {
         debug('Initializing plugin');
-        var rawDevices = idbCompanion.list();
+        var rawDevices = await idbCompanion.list();
 
         this.availableDevices = deviceList.parse(rawDevices);
         debug(`Found ${this.availableDevices.length} devices`);
