@@ -1,8 +1,8 @@
-var idbCompanion = require('../lib/idb_companion.js');
-var sinon = require('sinon');
-var assert = require('assert');
-var process = require('process');
-var childProcess = require('child_process');
+const idbCompanion = require('../lib/idb_companion.js');
+const sinon = require('sinon');
+const assert = require('assert');
+const process = require('process');
+const childProcess = require('child_process');
 
 
 describe('idb_companion', function () {
@@ -10,97 +10,111 @@ describe('idb_companion', function () {
         sinon.restore();
     });
     describe('#boot()', function () {
-        it('should call _exec with correct args', function () {
-            var execStub = sinon.stub(idbCompanion, '_exec').returns({ rc: 0, stdout: '' });
+        it('should call _exec with correct args', async function () {
+            const execStub = sinon.stub(idbCompanion, '_exec').resolves({ rc: 0, stdout: '' });
 
-            idbCompanion.boot('device_udid');
+            await idbCompanion.boot('device_udid');
             assert(execStub.calledWith(['--boot', 'device_udid']));
         });
-        it('should exit if _exec returns non-zero', function () {
-            sinon.stub(idbCompanion, '_exec').returns({ rc: 64, stdout: '' });
-            var exitStub = sinon.stub(process, 'exit');
+        it('should exit if _exec returns non-zero', async function () {
+            sinon.stub(idbCompanion, '_exec').rejects({ rc: 64, stdout: '' });
+            const exitStub = sinon.stub(process, 'exit');
 
-            idbCompanion.boot('device_udid');
-            assert(exitStub.calledWith(64));
+            try {
+                await idbCompanion.boot('device_udid');
+
+                assert(false);
+            }
+            catch (e) {
+                assert(exitStub.calledWith(64));
+            }
         });
     });
     describe('#shutdown()', function () {
-        it('should call _exec with correct args', function () {
-            var execStub = sinon.stub(idbCompanion, '_exec').returns({ rc: 0, stdout: '' });
+        it('should call _exec with correct args', async function () {
+            const execStub = sinon.stub(idbCompanion, '_exec').resolves({ rc: 0, stdout: '' });
 
-            idbCompanion.shutdown('device_udid');
+            await idbCompanion.shutdown('device_udid');
             assert(execStub.calledWith(['--shutdown', 'device_udid']));
-        });
-        it('should ignore _exec errors', function () {
-            sinon.stub(idbCompanion, '_exec').returns({ rc: 64, stdout: '' });
-            var exitStub = sinon.stub(process, 'exit');
-
-            idbCompanion.shutdown('device_udid');
-            assert(!exitStub.called);
         });
     });
     describe('#list()', function () {
-        it('should call _exec with correct args', function () {
-            var execStub = sinon.stub(idbCompanion, '_exec').returns({ rc: 0, stdout: '' });
+        it('should call _exec with correct args', async function () {
+            const execStub = sinon.stub(idbCompanion, '_exec').resolves({ rc: 0, stdout: '' });
 
-            idbCompanion.list();
+            await idbCompanion.list();
             assert(execStub.calledWith(['--list 1']));
         });
-        it('should always return an array', function () {
-            sinon.stub(idbCompanion, '_exec').returns({ rc: 0, stdout: '' });
-            var devices = idbCompanion.list();
+        it('should always return an array', async function () {
+            sinon.stub(idbCompanion, '_exec').resolves({ rc: 0, stdout: '' });
+            const devices = await idbCompanion.list();
 
             assert(Array.isArray(devices));
         });
-        it('should always return an array', function () {
-            sinon.stub(idbCompanion, '_exec').returns({ rc: 65, stdout: '' });
-            var devices = idbCompanion.list();
+        it('should return an empty array if _exec errors', async function () {
+            sinon.stub(idbCompanion, '_exec').rejects({ rc: 65, stdout: '' });
+            const devices = await idbCompanion.list();
 
             assert(Array.isArray(devices));
             assert(devices.length === 0);
         });
     });
     describe('#_exec()', function () {
-        it('should return with code 64 if idb_companion is not on PATH', function () {
-            var resultError = new Error();
+        it('should return with code 64 if idb_companion is not on PATH', async function () {
+            const resultError = new Error();
 
-            resultError.status = 127;
-            sinon.stub(childProcess, 'execSync').throws(resultError);
+            resultError.code = 127;
+            sinon.stub(childProcess, 'exec').yields(resultError, '', '');
 
-            var { rc, } = idbCompanion._exec(['--list 1']);
-
-            assert(rc === 64);
+            try {
+                var { rc, stdout } = await idbCompanion._exec(['--list 1']);
+            }
+            catch (e) {
+                assert(e.rc === 64);
+            }
+            assert(typeof rc === 'undefined');
+            assert(typeof stdout === 'undefined');
         });
-        it('should return with code 65 if command times out', function () {
-            var timeoutError = new Error();
+        it('should return with code 65 if command times out', async function () {
+            const timeoutError = new Error();
 
-            timeoutError.errno = 'ETIMEDOUT';
-            timeoutError.code = 'ETIMEDOUT';
-            sinon.stub(childProcess, 'execSync').throws(timeoutError);
+            timeoutError.killed = true;
+            timeoutError.signal = 'SIGKILL';
+            sinon.stub(childProcess, 'exec').yields(timeoutError);
 
-            var { rc, } = idbCompanion._exec(['--boot', 'udid']);
-
-            assert(rc === 65);
+            try {
+                var { rc, stdout } = await idbCompanion._exec(['--boot', 'udid']);
+            }
+            catch (e) {
+                assert(e.rc === 65);
+            }
+            assert(typeof rc === 'undefined');
+            assert(typeof stdout === 'undefined');
         });
-        it('should return with code 1 if command exits with unknown error', function () {
-            sinon.stub(childProcess, 'execSync').throws(new Error());
-            var { rc, } = idbCompanion._exec(['unsupported_cmd']);
-
-            assert(rc === 1);
+        it('should return with code 1 if command exits with unknown error', async function () {
+            sinon.stub(childProcess, 'exec').yields(new Error());
+            try {
+                var { rc, stdout } = await idbCompanion._exec(['unsupported_cmd']);
+            }
+            catch (e) {
+                assert(e.rc === 1);
+            }
+            assert(typeof rc === 'undefined');
+            assert(typeof stdout === 'undefined');
         });
-        it('should not set timeout if options are not provided', function () {
-            var execStub = sinon.stub(childProcess, 'execSync');
+        it('should not set timeout if options are not provided', async function () {
+            const execStub = sinon.stub(childProcess, 'exec').yields(null);
 
-            idbCompanion._exec(['some', 'args']);
-            var options = execStub.firstCall.args[1];
+            await idbCompanion._exec(['some', 'args']);
+            const options = execStub.firstCall.args[1];
 
             assert(!('timeout' in options));
         });
-        it('should set timeout if provided', function () {
-            var execStub = sinon.stub(childProcess, 'execSync');
+        it('should set timeout if provided', async function () {
+            const execStub = sinon.stub(childProcess, 'exec').yields(null);
 
-            idbCompanion._exec(['some', 'args'], { timeout: 100 });
-            var options = execStub.firstCall.args[1];
+            await idbCompanion._exec(['some', 'args'], { timeout: 100 });
+            const options = execStub.firstCall.args[1];
 
             assert('timeout' in options);
             assert(options.timeout === 100);

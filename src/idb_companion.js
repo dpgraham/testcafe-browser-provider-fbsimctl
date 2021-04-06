@@ -3,45 +3,57 @@ const debug = require('debug')('testcafe:browser-provider-ios');
 const process = require('process');
 
 export default {
-    boot (udid, timeout) {
-        const { rc, stdout } = this._exec(['--boot', udid], { timeout });
-
-        if (rc !== 0) {
+    async boot (udid, timeout) {
+        try {
+            await this._exec(['--boot', udid], { timeout });
+        }
+        catch (e) {
             console.error('Failed to boot simulator');
-            console.error(stdout.toString());
-            process.exit(rc);
+            console.error(e.stdout.toString());
+            process.exit(e.rc);
         }
     },
-    shutdown (udid, timeout) {
-        this._exec(['--shutdown', udid], { timeout });
-    },
-    list () {
-        const { rc, stdout } = this._exec(['--list 1']);
-
-        if (rc === 0)
-            return stdout.toString().trim().split('\n');
-        return [];
-    },
-    _exec (args, opts = {}) {
+    async shutdown (udid, timeout) {
         try {
-            const execOpts = { stdio: ['pipe', 'pipe', 'pipe'] };
+            await this._exec(['--shutdown', udid], { timeout });
+        }
+        catch (e) { // eslint-disable-line no-empty
+        }
+    },
+    async list () {
+        try {
+            const response = await this._exec(['--list 1']); // eslint-disable-line no-unused-vars
+
+            return response.stdout.toString().trim().split('\n');
+        }
+        catch (e) {
+            return [];
+        }
+    },
+    async _exec (args, opts = {}) {
+        return new Promise((resolve, reject) => {
+            const execOpts = { killSignal: 'SIGKILL' };
 
             if ('timeout' in opts)
                 execOpts['timeout'] = opts.timeout;
-            const stdout = childProcess.execSync(`idb_companion ${args.join(' ')}`, execOpts);
-
-            return { rc: 0, stdout: stdout };
-        }
-        catch (e) {
-            if (e.errno === 'ETIMEDOUT') {
-                debug('_exec errored with timeout');
-                return { rc: 65, stdout: '' };
-            }
-            if (e.status === 127) {
-                debug('_exec could not find idb_companion');
-                return { rc: 64, stdout: e.stdout };
-            }
-            return { rc: 1, stdout: e.stdout };
-        }
+            childProcess.exec(`idb_companion ${args.join(' ')}`, execOpts, (error, stdout, stderr) => {
+                if (error !== null) {
+                    if (error.killed === true && error.signal === 'SIGKILL') {
+                        debug('_exec errored with timeout');
+                        reject({ rc: 65, stdout, stderr });
+                        return;
+                    }
+                    if (error.code === 127) {
+                        debug('_exec could not find idb_companion');
+                        reject({ rc: 64, stdout, stderr });
+                        return;
+                    }
+                    debug('_exec exited with unknown error');
+                    reject({ rc: 1, stdout, stderr });
+                    return;
+                }
+                resolve({ rc: 0, stdout, stderr });
+            });
+        });
     },
 };
