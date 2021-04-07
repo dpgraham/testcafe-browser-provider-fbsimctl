@@ -14,10 +14,8 @@ export default {
     availableDevices: [],
 
     _browserNameToDevice (browserName) {
-        let [ device, version = '' ] = browserName.split(':'); // eslint-disable-line prefer-const
+        const [ device, version = 'any' ] = browserName.split(':');
 
-        if (version === '')
-            version = 'any';
         return deviceList.find(this.availableDevices, { name: device, platform: version });
     },
 
