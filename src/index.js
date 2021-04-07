@@ -1,4 +1,5 @@
-const childProcess = require('child_process');
+const util = require('util');
+const exec = util.promisify(require('child_process').exec);
 const debug = require('debug')('testcafe:browser-provider-ios');
 const deviceList = require('./device_list.js');
 const idbCompanion = require('./idb_companion.js');
@@ -42,7 +43,7 @@ export default {
         await idbCompanion.boot(device.udid, timeout * 1000);
 
         debug(`Opening url: ${pageUrl}`);
-        childProcess.execSync(`xcrun simctl openurl ${device.udid} ${pageUrl}`, { stdio: 'ignore' });
+        await exec(`xcrun simctl openurl ${device.udid} ${pageUrl}`, { stdio: 'ignore' });
     },
 
     async closeBrowser (id) {
@@ -73,6 +74,6 @@ export default {
     async takeScreenshot (id, screenshotPath) {
         var command = `xcrun simctl io ${this.currentBrowsers[id].udid} screenshot '${screenshotPath}'`;
 
-        childProcess.execSync(command, { stdio: 'ignore' });
+        await exec(command, { stdio: 'ignore' });
     }
 };
