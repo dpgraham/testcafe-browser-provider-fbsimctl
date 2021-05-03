@@ -45,6 +45,11 @@ export default {
     },
 
     async closeBrowser (id) {
+        const skipShutdown = process.env.IOS_SKIP_SHUTDOWN || '';
+
+        if (skipShutdown !== '')
+            return;
+
         await idbCompanion.shutdown(this.currentBrowsers[id].udid);
     },
 
