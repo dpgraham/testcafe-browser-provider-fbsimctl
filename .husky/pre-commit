@@ -1,0 +1,2 @@
+npx pretty-quick --staged --pattern "**/*.{js,ts,mjs,cjs}"
+npm run lint
