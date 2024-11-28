@@ -59,5 +59,4 @@ jobs:
           npm ci
           npm link testcafe-browser-provider-ios
           DEVICE=$(npx testcafe --list-browsers ios | tail -n 1)
-          echo $DEVICE
-          npx testcafe "$DEVICE" tests/
+          npx testcafe $DEVICE tests/
