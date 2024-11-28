@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     steps:
@@ -29,3 +29,32 @@ jobs:
 
       - name: Test
         run: npm test
+
+  integration-test:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Link
+        run: npm link
+
+      - name: Install idb
+        run: brew install fb-idb
+
+      - name: Test
+        working-directory: tests/integration
+        run: |
+          npm ci
+          npm link testcafe-browser-provider-ios
+          npx testcafe --list-browsers ios
+          npx testcafe "ios:iPhone 15 Pro Max:iOS 17.0" tests/

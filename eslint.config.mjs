@@ -15,7 +15,7 @@ export default [
     },
   },
   {
-    files: ["test/**/*.js"],
+    files: ["tests/unit/**/*.js"],
     plugins: {
       mocha,
     },

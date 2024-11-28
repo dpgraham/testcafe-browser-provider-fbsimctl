@@ -16,7 +16,7 @@
     "lint": "prettier --check '**/*.{js,ts,mjs,cjs}' && eslint .",
     "fmt": "prettier --write '**/*.{js,ts,mjs,cjs}'",
     "prepare": "husky",
-    "test": "mocha"
+    "test": "mocha tests/unit/"
   },
   "keywords": [
     "testcafe",
