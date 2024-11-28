@@ -49,7 +49,9 @@ jobs:
         run: npm link
 
       - name: Install idb
-        run: brew install fb-idb
+        run: |
+          brew tap facebook/fb
+          brew install idb-companion
 
       - name: Test
         working-directory: tests/integration
