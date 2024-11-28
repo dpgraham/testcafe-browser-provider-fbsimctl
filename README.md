@@ -58,12 +58,6 @@ Run with `DEBUG="testcafe:browser-provider-ios"` to see debug output.
 npm test
 ```
 
-## Built With
-
-* [Babel](https://babeljs.io)
-* [gulp.js](https://gulpjs.com)
-* [Mocha](https://mochajs.org)
-
 ## Contributing
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our process for submitting pull requests to us, and please ensure you follow the [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).

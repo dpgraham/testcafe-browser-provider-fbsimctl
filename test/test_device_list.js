@@ -1,5 +1,5 @@
 const assert = require("assert");
-const deviceList = require("../lib/device_list.js");
+const deviceList = require("../src/device_list.js");
 const sortedList = [
   {
     name: "iPhone X",

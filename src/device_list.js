@@ -1,6 +1,6 @@
-export default {
+module.exports = {
   find(list, { platform, name }) {
-    // Do a lowercase match on the device they have asked for so we can be nice about iphone vs iPhone
+    // Do a lowercase match on the device they have asked for so we can be nice about iphone vs iPhone.
     platform = platform.toLowerCase();
     name = name.toLowerCase();
 
@@ -22,14 +22,13 @@ export default {
     for (const entry of rawList) {
       try {
         var { udid, os_version: osVersion, state, name } = JSON.parse(entry);
-        // eslint-disable-next-line no-unused-vars
-      } catch (e) {
+      } catch {
         continue;
       }
       const [os, version] = osVersion.split(" ");
       const device = { name, os, version, udid, state };
 
-      // We can't run tests on tvOS or watchOS, so only include iOS devices
+      // We can't run tests on tvOS or watchOS, so only include iOS devices.
       if (device.os && device.os.startsWith("iOS")) parsedList.push(device);
     }
 

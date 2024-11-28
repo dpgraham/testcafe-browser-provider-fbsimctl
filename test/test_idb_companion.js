@@ -1,4 +1,4 @@
-const idbCompanion = require("../lib/idb_companion.js");
+const idbCompanion = require("../src/idb_companion.js");
 const sinon = require("sinon");
 const assert = require("assert");
 const process = require("process");
