@@ -16,7 +16,12 @@
     "lint": "prettier --check '**/*.{js,ts,mjs,cjs}' && eslint .",
     "fmt": "prettier --write '**/*.{js,ts,mjs,cjs}'",
     "prepare": "husky",
-    "test": "mocha tests/unit/"
+    "test": "mocha tests/unit/",
+    "release": "release-it --github.release",
+    "release:ci": "npm run release -- --ci --no-git.requireCleanWorkingDir",
+    "release:patch": "npm run release -- patch",
+    "release:minor": "npm run release -- minor",
+    "release:major": "npm run release -- major"
   },
   "keywords": [
     "testcafe",
@@ -42,3 +47,4 @@
     "sinon": "^19.0.2"
   }
 }
+
