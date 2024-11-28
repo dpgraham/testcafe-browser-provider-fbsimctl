@@ -58,5 +58,5 @@ jobs:
         run: |
           npm ci
           npm link testcafe-browser-provider-ios
-          npx testcafe --list-browsers ios
-          npx testcafe "ios:iPhone 15 Pro Max:iOS 17.0" tests/
+          DEVICE=$(npx testcafe --list-browsers ios | head -n 1)
+          npx testcafe $DEVICE tests/
