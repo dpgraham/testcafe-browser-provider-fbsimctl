@@ -5,7 +5,7 @@ const deviceList = require("./device_list.js");
 const idbCompanion = require("./idb_companion.js");
 const process = require("process");
 
-export default {
+module.exports = {
   // Multiple browsers support
   isMultiBrowser: true,
 

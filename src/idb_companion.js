@@ -2,7 +2,7 @@ const childProcess = require("child_process");
 const debug = require("debug")("testcafe:browser-provider-ios");
 const process = require("process");
 
-export default {
+module.exports = {
   async boot(udid, timeout) {
     try {
       await this._exec(["--boot", udid], { timeout });
@@ -15,16 +15,16 @@ export default {
   async shutdown(udid, timeout) {
     try {
       await this._exec(["--shutdown", udid], { timeout });
-      // eslint-disable-next-line no-empty, no-unused-vars
-    } catch (e) {}
+    } catch (e) {
+      debug(`Failed to execute shutdown for device ${udid}: `, e);
+    }
   },
   async list() {
     try {
       const response = await this._exec(["--list 1"]);
 
       return response.stdout.toString().trim().split("\n");
-      // eslint-disable-next-line no-unused-vars
-    } catch (e) {
+    } catch {
       return [];
     }
   },

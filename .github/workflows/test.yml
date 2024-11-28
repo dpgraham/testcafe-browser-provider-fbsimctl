@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,11 +24,39 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Build
-        run: npm run build
-
       - name: Lint
         run: npm run lint
 
       - name: Test
         run: npm test
+
+  integration-test:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Link
+        run: npm link
+
+      - name: Install idb
+        run: |
+          brew tap facebook/fb
+          brew install idb-companion
+
+      - name: Test
+        working-directory: tests/integration
+        run: |
+          npm ci
+          npm link testcafe-browser-provider-ios
+          DEVICE=$(npx testcafe --list-browsers ios | tail -n 1)
+          npx testcafe "$DEVICE" tests/
